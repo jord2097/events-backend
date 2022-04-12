@@ -3,13 +3,15 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const { ObjectId, Admin } = require('mongodb');
+const { ObjectId } = require('mongodb');
 const port = process.env.PORT || 3000;
 const mongoose = require("mongoose");
 const { v4: uuidv4 } = require('uuid');
 const uri = "mongodb+srv://jord2097:9Y8ML4kvEPcTqR99@cluster0.q2ktn.mongodb.net/eventsApp?retryWrites=true&w=majority"
 const { Event } = require('./models/events')
 const { User } = require ('./models/users')
+const extAPIcontroller = require('./externalAPI')
+const createError = require('http-errors')
 
 mongoose.connect(uri)
 
@@ -19,7 +21,7 @@ app.use(bodyParser.json())
 app.use(cors())
 app.use(morgan('combined'))
 
-// prior to auth for read-only privileges
+// these functions are prior to auth for read-only guest privileges
 app.get('/', async(req,res) => {
     res.send(await Event.find())
 })
@@ -38,7 +40,20 @@ app.get('/date/:date', async (req, res) => {
         return res.sendStatus(404)
     }
     res.send(dateMatches)
-}) // use moment if possible for date/time handling - make it more user friendly
+}) // find by date
+// use library e.g. luxon for date/time handling - make it more user friendly
+
+// register
+app.post('/register', async (req, res, next) => {
+    const checkuser = await User.findOne({userName: req.body.userName})
+    if(checkuser) {
+        (next(createError(409,"user already exists")))
+    }
+    const newUser = req.body
+    const user = new User(newUser)
+    await user.save()
+    res.send({message: "New account registered!"})
+})
 
 // login
 app.post('/auth', async (req,res) => {    
@@ -55,7 +70,7 @@ app.post('/auth', async (req,res) => {
     res.send({token: user.token})
 })
 
-// authorisation using token
+// authorisation using token to save login state
 app.use(async (req,res,next) => {
     const authHeader = req.headers['authorization']
     const user = await User.findOne({token: authHeader})
@@ -68,11 +83,21 @@ app.use(async (req,res,next) => {
 
 app.post('/', async (req,res) => {
     const newEvent = req.body
+    /* const reverseGeo = await extAPIcontroller.getCoords(req,res)    
+    if(!reverseGeo.data[0].lat) {
+        return (next(createError("Could not obtain geodata from that place name.")));    
+    }
+    lat = reverseGeo.data[0].lat
+    lon = reverseGeo.data[0].lon    
+    const forecast = await extAPIcontroller.getForecast(req,res)
+    console.log(forecast.data.daily[1])
+    const timestamp = (new Date(req.body.eventDate).getTime() / 1000)
+    console.log(timestamp) */
     const event = new Event(newEvent)
     await event.save()
     res.send({ message: 'New event posted.'})
 
-})
+}) 
 
 app.delete('/:id', async (req,res) => {
     await Event.deleteOne({_id: ObjectId(req.params.id)})
