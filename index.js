@@ -104,6 +104,15 @@ app.delete('/:id', async (req,res) => {
     res.send({message: 'Event deleted.'})
 })
 
+app.delete('/deleteall/:confirm', async (req,res) => {
+    if (req.params.confirm !== "yes") {
+        return res.send({message: `Are you sure you want to delete? Replace ${req.params.confirm} with yes`})
+    }
+    await Event.deleteMany()
+    res.send({message: 'All Events Deleted.'})
+    
+})
+
 app.put('/:id', async (req,res) => {
     await Event.findOneAndUpdate({_id: ObjectId(req.params.id)}, req.body)
     res.send({ message: 'Event updated.'})

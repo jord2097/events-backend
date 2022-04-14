@@ -6,9 +6,7 @@ const eventSchema = mongoose.Schema({
     location: String,
     description: String,
     eventDate: String,
-    eventTime: String,
-    eventTags: String
-    
+    img: String  
 })
 
 module.exports.Event = mongoose.model('events', eventSchema, 'events')
