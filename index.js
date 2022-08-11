@@ -7,7 +7,7 @@ const { ObjectId } = require('mongodb');
 const port = process.env.PORT || 3000;
 const mongoose = require("mongoose");
 const { v4: uuidv4 } = require('uuid');
-const uri = "mongodb+srv://jord2097:9Y8ML4kvEPcTqR99@cluster0.q2ktn.mongodb.net/eventsApp?retryWrites=true&w=majority"
+const uri = ""
 const { Event } = require('./models/events')
 const { User } = require ('./models/users')
 const extAPIcontroller = require('./externalAPI')
